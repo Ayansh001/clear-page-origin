@@ -1,24 +1,26 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blank Page</title>
-    <meta name="description" content="A clean, minimal blank page" />
-    <meta name="author" content="Lovable" />
-
-    <meta property="og:title" content="a955f762-5b45-4ec7-b00c-8ceaf3b8c9c7" />
-    <meta property="og:description" content="Lovable Generated Project" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <title>meal-flow-visualizer</title>
+    <meta name="description" content="Nutrition and Fitness Tracker" />
+    <meta name="author" content="" />
+    <meta property="og:image" content="/og-image.png" />
   </head>
 
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <!-- Development mode debug extension -->
+    <script>
+      window.addEventListener('keydown', function(e) {
+        // Enable console with Ctrl+Shift+I or F12
+        if ((e.ctrlKey && e.shiftKey && e.key === 'I') || e.key === 'F12') {
+          console.log('Debug mode activated');
+        }
+      });
+    </script>
   </body>
 </html>
