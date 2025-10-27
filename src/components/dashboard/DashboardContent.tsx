@@ -11,6 +11,9 @@ interface DashboardContentProps {
   progressData: ProgressData[];
   onWaterChange: (amount: number) => void;
   onAddNutritionItem: (item: Omit<NutritionItem, 'id' | 'timestamp'>) => void;
+  onDeleteNutritionItem: (id: string) => void;
+  onExportData: () => void;
+  onImportData: (fileInput: HTMLInputElement) => void;
 }
 
 const DashboardContent = ({
@@ -19,7 +22,10 @@ const DashboardContent = ({
   nutritionItems,
   progressData,
   onWaterChange,
-  onAddNutritionItem
+  onAddNutritionItem,
+  onDeleteNutritionItem,
+  onExportData,
+  onImportData
 }: DashboardContentProps) => {
   return (
     <>
@@ -33,6 +39,9 @@ const DashboardContent = ({
         <NutritionTracker
           nutritionItems={nutritionItems}
           onAddItem={onAddNutritionItem}
+          onDeleteItem={onDeleteNutritionItem}
+          onExportData={onExportData}
+          onImportData={onImportData}
         />
       </div>
       

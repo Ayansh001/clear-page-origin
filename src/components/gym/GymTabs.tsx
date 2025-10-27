@@ -5,14 +5,22 @@ import WorkoutList from '@/components/gym/WorkoutList';
 import WorkoutScheduler from '@/components/gym/WorkoutScheduler';
 import TodoList from '@/components/gym/TodoList';
 import ProgressGallery from '@/components/gym/ProgressGallery';
-import { Workout, GymTask, ProgressImage } from '@/lib/types';
+import { Workout, GymTask, ProgressImage, WorkoutTemplate, WorkoutStatistics } from '@/lib/types';
 
 interface GymTabsProps {
   workouts: Workout[];
   tasks: GymTask[];
   progressImages: ProgressImage[];
+  templates: WorkoutTemplate[];
+  statistics: WorkoutStatistics;
   setWorkouts: React.Dispatch<React.SetStateAction<Workout[]>>;
   onAddWorkout: (workout: Omit<Workout, 'id'>) => void;
+  onUpdateWorkout: (id: string, workout: Partial<Workout>) => void;
+  onAddTemplate: (template: Omit<WorkoutTemplate, 'id'>) => void;
+  onUpdateTemplate: (id: string, updates: Partial<WorkoutTemplate>) => void;
+  onDeleteTemplate: (id: string) => void;
+  onDuplicateTemplate: (id: string) => void;
+  onCreateWorkoutFromTemplate: (templateId: string) => void;
   onAddTask: (task: Omit<GymTask, 'id'>) => void;
   onToggleTask: (id: string) => void;
   onAddProgressImage: (image: Omit<ProgressImage, 'id'>) => void;
@@ -22,8 +30,10 @@ const GymTabs = ({
   workouts,
   tasks,
   progressImages,
+  templates,
   setWorkouts,
   onAddWorkout,
+  onUpdateWorkout,
   onAddTask,
   onToggleTask,
   onAddProgressImage
@@ -48,9 +58,11 @@ const GymTabs = ({
       
       <TabsContent value="workouts" className="mt-4">
         <WorkoutList 
-          workouts={workouts} 
+          workouts={workouts}
+          templates={templates}
           setWorkouts={setWorkouts} 
-          onAddWorkout={onAddWorkout} 
+          onAddWorkout={onAddWorkout}
+          onUpdateWorkout={onUpdateWorkout}
         />
       </TabsContent>
       
