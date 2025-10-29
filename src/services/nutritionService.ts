@@ -1,3 +1,136 @@
+import { supabase } from "@/integrations/supabase/client";
+import { NutritionItem, NutritionGoal } from "@/lib/types";
+
+// Supabase service methods
+export const nutritionService = {
+  async getNutritionItems(date?: Date): Promise<NutritionItem[]> {
+    let query = supabase
+      .from('nutrition_items')
+      .select('*')
+      .is('user_id', null)
+      .order('timestamp', { ascending: false });
+    
+    if (date) {
+      const dateStr = date.toISOString().split('T')[0];
+      query = query
+        .gte('timestamp', `${dateStr}T00:00:00`)
+        .lt('timestamp', `${dateStr}T23:59:59`);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    
+    return (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      calories: Number(item.calories),
+      protein: Number(item.protein),
+      carbs: Number(item.carbs),
+      fats: Number(item.fats),
+      timestamp: new Date(item.timestamp),
+      isVegetarian: item.is_vegetarian,
+      category: item.category as any
+    }));
+  },
+
+  async addNutritionItem(item: Omit<NutritionItem, 'id' | 'timestamp'>): Promise<NutritionItem> {
+    const { data, error } = await supabase
+      .from('nutrition_items')
+      .insert({
+        user_id: null,
+        name: item.name,
+        calories: item.calories,
+        protein: item.protein,
+        carbs: item.carbs,
+        fats: item.fats,
+        is_vegetarian: item.isVegetarian,
+        category: item.category
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return {
+      id: data.id,
+      name: data.name,
+      calories: Number(data.calories),
+      protein: Number(data.protein),
+      carbs: Number(data.carbs),
+      fats: Number(data.fats),
+      timestamp: new Date(data.timestamp),
+      isVegetarian: data.is_vegetarian,
+      category: data.category as any
+    };
+  },
+
+  async deleteNutritionItem(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('nutrition_items')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+  },
+
+  async getNutritionGoals(): Promise<NutritionGoal | null> {
+    const { data, error } = await supabase
+      .from('nutrition_goals')
+      .select('*')
+      .is('user_id', null)
+      .maybeSingle();
+    
+    if (error) throw error;
+    
+    if (!data) return null;
+    
+    return {
+      calories: Number(data.calories),
+      protein: Number(data.protein),
+      carbs: Number(data.carbs),
+      fats: Number(data.fats)
+    };
+  },
+
+  async updateNutritionGoals(goals: NutritionGoal): Promise<void> {
+    // First, try to get existing goals
+    const { data: existing } = await supabase
+      .from('nutrition_goals')
+      .select('id')
+      .is('user_id', null)
+      .maybeSingle();
+    
+    if (existing) {
+      // Update existing
+      const { error } = await supabase
+        .from('nutrition_goals')
+        .update({
+          calories: goals.calories,
+          protein: goals.protein,
+          carbs: goals.carbs,
+          fats: goals.fats,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      
+      if (error) throw error;
+    } else {
+      // Insert new
+      const { error } = await supabase
+        .from('nutrition_goals')
+        .insert({
+          user_id: null,
+          calories: goals.calories,
+          protein: goals.protein,
+          carbs: goals.carbs,
+          fats: goals.fats
+        });
+      
+      if (error) throw error;
+    }
+  }
+};
 
 // Database of common foods with nutrition data
 export const foodDatabase = {

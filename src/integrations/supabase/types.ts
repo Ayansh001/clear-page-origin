@@ -14,13 +14,299 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      gym_tasks: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          date: string
+          id: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      nutrition_goals: {
+        Row: {
+          calories: number
+          carbs: number
+          fats: number
+          id: string
+          protein: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          calories: number
+          carbs: number
+          fats: number
+          id?: string
+          protein: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          calories?: number
+          carbs?: number
+          fats?: number
+          id?: string
+          protein?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      nutrition_items: {
+        Row: {
+          calories: number
+          carbs: number
+          category: string | null
+          created_at: string | null
+          fats: number
+          id: string
+          is_vegetarian: boolean | null
+          name: string
+          protein: number
+          timestamp: string
+          user_id: string | null
+        }
+        Insert: {
+          calories: number
+          carbs: number
+          category?: string | null
+          created_at?: string | null
+          fats: number
+          id?: string
+          is_vegetarian?: boolean | null
+          name: string
+          protein: number
+          timestamp?: string
+          user_id?: string | null
+        }
+        Update: {
+          calories?: number
+          carbs?: number
+          category?: string | null
+          created_at?: string | null
+          fats?: number
+          id?: string
+          is_vegetarian?: boolean | null
+          name?: string
+          protein?: number
+          timestamp?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      progress_data: {
+        Row: {
+          calories: number | null
+          carbs: number | null
+          date: string
+          fats: number | null
+          id: string
+          protein: number | null
+          user_id: string | null
+          water: number | null
+        }
+        Insert: {
+          calories?: number | null
+          carbs?: number | null
+          date: string
+          fats?: number | null
+          id?: string
+          protein?: number | null
+          user_id?: string | null
+          water?: number | null
+        }
+        Update: {
+          calories?: number | null
+          carbs?: number | null
+          date?: string
+          fats?: number | null
+          id?: string
+          protein?: number | null
+          user_id?: string | null
+          water?: number | null
+        }
+        Relationships: []
+      }
+      progress_images: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          notes: string | null
+          url: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          url: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          notes?: string | null
+          url?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      water_tracking: {
+        Row: {
+          date: string
+          goal_ml: number
+          id: string
+          intake_ml: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          date?: string
+          goal_ml?: number
+          id?: string
+          intake_ml?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          date?: string
+          goal_ml?: number
+          id?: string
+          intake_ml?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      workout_templates: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          exercises: Json
+          favorite: boolean | null
+          id: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          exercises?: Json
+          favorite?: boolean | null
+          id?: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          exercises?: Json
+          favorite?: boolean | null
+          id?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      workouts: {
+        Row: {
+          category: string | null
+          completed: boolean | null
+          created_at: string | null
+          date: string
+          description: string | null
+          duration: number | null
+          end_time: string | null
+          exercises: Json
+          favorite: boolean | null
+          id: string
+          name: string
+          recurring: boolean | null
+          recurring_days: number[] | null
+          start_time: string | null
+          template_id: string | null
+          user_id: string | null
+          volume_total: number | null
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          duration?: number | null
+          end_time?: string | null
+          exercises?: Json
+          favorite?: boolean | null
+          id?: string
+          name: string
+          recurring?: boolean | null
+          recurring_days?: number[] | null
+          start_time?: string | null
+          template_id?: string | null
+          user_id?: string | null
+          volume_total?: number | null
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          duration?: number | null
+          end_time?: string | null
+          exercises?: Json
+          favorite?: boolean | null
+          id?: string
+          name?: string
+          recurring?: boolean | null
+          recurring_days?: number[] | null
+          start_time?: string | null
+          template_id?: string | null
+          user_id?: string | null
+          volume_total?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      upsert_water_tracking: {
+        Args: {
+          p_date: string
+          p_goal_ml: number
+          p_intake_ml: number
+          p_user_id?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

@@ -1,27 +1,44 @@
-
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import WaterTracker from '@/components/WaterTracker';
-import { saveToLocalStorage, loadFromLocalStorage, STORAGE_KEYS } from '@/lib/localStorage';
+import { waterService } from '@/services/waterService';
 import { toast } from "sonner";
 
 const Water = () => {
-  // Load data from localStorage with fallback to initial values
-  const [waterGoal, setWaterGoal] = useState<number>(() => 
-    loadFromLocalStorage(STORAGE_KEYS.WATER_GOAL, 2000)
-  );
-  const [waterIntake, setWaterIntake] = useState<number>(() => 
-    loadFromLocalStorage(STORAGE_KEYS.WATER_INTAKE, 0)
-  );
+  const queryClient = useQueryClient();
+  const [waterGoal, setWaterGoal] = useState(2000);
+  const today = new Date();
 
-  // Save water data to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.WATER_INTAKE, waterIntake);
-  }, [waterIntake]);
+  // Fetch water tracking data
+  const { data: waterData, isLoading } = useQuery({
+    queryKey: ['water-tracking', today.toDateString()],
+    queryFn: () => waterService.getWaterTracking(today),
+    refetchOnWindowFocus: false
+  });
 
+  const waterIntake = waterData?.intake_ml || 0;
+  const goalFromDb = waterData?.goal_ml || 2000;
+
+  // Sync local goal state with DB
   useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.WATER_GOAL, waterGoal);
-  }, [waterGoal]);
+    if (waterData) {
+      setWaterGoal(waterData.goal_ml);
+    }
+  }, [waterData]);
+
+  // Mutation for updating water
+  const updateMutation = useMutation({
+    mutationFn: ({ intake, goal }: { intake: number; goal: number }) =>
+      waterService.updateWaterTracking(today, intake, goal),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['water-tracking'] });
+    },
+    onError: (error) => {
+      console.error("Error updating water intake:", error);
+      toast.error("Failed to update water intake");
+    }
+  });
 
   // Add page entrance animation
   useEffect(() => {
@@ -32,33 +49,21 @@ const Water = () => {
   }, []);
 
   const handleWaterChange = (amount: number) => {
-    try {
-      if (amount >= 0) {
-        const previousAmount = waterIntake;
-        setWaterIntake(amount);
-        
-        // Show toast only when increasing water intake
-        if (amount > previousAmount) {
-          toast.success("Water intake updated");
-        }
+    if (amount >= 0) {
+      updateMutation.mutate({ intake: amount, goal: waterGoal });
+      if (amount > waterIntake) {
+        toast.success("Water intake updated");
       }
-    } catch (error) {
-      console.error("Error updating water intake:", error);
-      toast.error("Failed to update water intake");
     }
   };
 
   const handleWaterGoalChange = (amount: number) => {
-    try {
-      if (amount >= 500 && amount <= 5000) {
-        setWaterGoal(amount);
-        toast.success("Water goal updated");
-      } else {
-        toast.error("Water goal must be between 500ml and 5000ml");
-      }
-    } catch (error) {
-      console.error("Error updating water goal:", error);
-      toast.error("Failed to update water goal");
+    if (amount >= 500 && amount <= 5000) {
+      setWaterGoal(amount);
+      updateMutation.mutate({ intake: waterIntake, goal: amount });
+      toast.success("Water goal updated");
+    } else {
+      toast.error("Water goal must be between 500ml and 5000ml");
     }
   };
   
@@ -74,11 +79,15 @@ const Water = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div>
-              <WaterTracker
-                currentAmount={waterIntake}
-                goalAmount={waterGoal}
-                onAmountChange={handleWaterChange}
-              />
+              {isLoading ? (
+                <div className="glass-card p-6">Loading...</div>
+              ) : (
+                <WaterTracker
+                  currentAmount={waterIntake}
+                  goalAmount={waterGoal}
+                  onAmountChange={handleWaterChange}
+                />
+              )}
             </div>
             
             <div className="space-y-6">

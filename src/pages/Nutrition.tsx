@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import NutritionTracker from '@/components/nutrition/NutritionTracker';
 import DailySummary from '@/components/nutrition/DailySummary';
@@ -7,7 +7,8 @@ import NutritionTips from '@/components/nutrition/NutritionTips';
 import WeeklyNutrition from '@/components/nutrition/WeeklyNutrition';
 import NutritionGoalsForm from '@/components/nutrition/NutritionGoalsForm';
 import { NutritionItem, ProgressData, NutritionGoal, MealCategory } from '@/lib/types';
-import { saveToLocalStorage, loadFromLocalStorage, STORAGE_KEYS } from '@/lib/localStorage';
+import { nutritionService } from '@/services/nutritionService';
+import { progressService } from '@/services/progressService';
 import { toast } from "sonner";
 
 // Default nutritional goals based on average needs
@@ -19,131 +20,89 @@ const DEFAULT_NUTRITION_GOALS: NutritionGoal = {
 };
 
 const Nutrition = () => {
-  // Load data from localStorage with fallback to initial values
-  const [nutritionItems, setNutritionItems] = useState<NutritionItem[]>(() => 
-    loadFromLocalStorage(STORAGE_KEYS.NUTRITION_ITEMS, [
-      {
-        id: '1',
-        name: 'Breakfast Smoothie',
-        calories: 350,
-        protein: 15,
-        carbs: 45,
-        fats: 10,
-        timestamp: new Date(),
-        isVegetarian: true,
-        category: 'breakfast' as MealCategory
-      },
-      {
-        id: '2',
-        name: 'Grilled Chicken Salad',
-        calories: 420,
-        protein: 35,
-        carbs: 25,
-        fats: 18,
-        timestamp: new Date(),
-        isVegetarian: false,
-        category: 'lunch' as MealCategory
-      }
-    ])
-  );
-  
-  // Load progress data from localStorage with fallback
-  const [progressData, setProgressData] = useState<ProgressData[]>(() => {
-    // Get stored data or use default
-    const storedData = loadFromLocalStorage<ProgressData[]>(STORAGE_KEYS.PROGRESS_DATA, []);
-    
-    if (storedData.length > 0) {
-      return storedData;
-    }
-    
-    // Generate last 7 days of empty data
-    const result = [];
-    const today = new Date();
-    
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
-      
-      result.push({
-        date: dayName,
-        water: 0,
-        calories: i === 0 ? nutritionItems.reduce((sum, item) => sum + item.calories, 0) : 0,
-        protein: i === 0 ? nutritionItems.reduce((sum, item) => sum + item.protein, 0) : 0,
-        carbs: i === 0 ? nutritionItems.reduce((sum, item) => sum + item.carbs, 0) : 0,
-        fats: i === 0 ? nutritionItems.reduce((sum, item) => sum + item.fats, 0) : 0
-      });
-    }
-    
-    return result;
-  });
-  
-  // Load nutrition goals from localStorage with fallback
-  const [nutritionGoals, setNutritionGoals] = useState<NutritionGoal>(() => 
-    loadFromLocalStorage(STORAGE_KEYS.NUTRITION_GOALS, DEFAULT_NUTRITION_GOALS)
-  );
-  
-  // State for showing goals form
+  const queryClient = useQueryClient();
   const [showGoalsForm, setShowGoalsForm] = useState(false);
-  
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.NUTRITION_ITEMS, nutritionItems);
-    
-    // Update today's progress data
-    const updatedProgressData = [...progressData];
-    const todayIndex = updatedProgressData.length - 1;
-    
-    if (todayIndex >= 0) {
-      updatedProgressData[todayIndex] = {
-        ...updatedProgressData[todayIndex],
-        calories: nutritionItems.reduce((sum, item) => sum + item.calories, 0),
-        protein: nutritionItems.reduce((sum, item) => sum + item.protein, 0),
-        carbs: nutritionItems.reduce((sum, item) => sum + item.carbs, 0),
-        fats: nutritionItems.reduce((sum, item) => sum + item.fats, 0)
-      };
-      
-      setProgressData(updatedProgressData);
-      saveToLocalStorage(STORAGE_KEYS.PROGRESS_DATA, updatedProgressData);
+
+  // Fetch nutrition items
+  const { data: nutritionItems = [], isLoading: itemsLoading } = useQuery({
+    queryKey: ['nutrition-items'],
+    queryFn: () => nutritionService.getNutritionItems()
+  });
+
+  // Fetch nutrition goals
+  const { data: nutritionGoals, isLoading: goalsLoading } = useQuery({
+    queryKey: ['nutrition-goals'],
+    queryFn: async () => {
+      const goals = await nutritionService.getNutritionGoals();
+      return goals || DEFAULT_NUTRITION_GOALS;
     }
-  }, [nutritionItems]);
-  
-  // Save goals when they change
-  useEffect(() => {
-    saveToLocalStorage(STORAGE_KEYS.NUTRITION_GOALS, nutritionGoals);
-  }, [nutritionGoals]);
-  
-  const handleAddNutritionItem = (item: Omit<NutritionItem, 'id' | 'timestamp'>) => {
-    try {
-      const newItem: NutritionItem = {
-        ...item,
-        id: Math.random().toString(36).substr(2, 9),
-        timestamp: new Date()
-      };
-      
-      setNutritionItems((prev) => [...prev, newItem]);
+  });
+
+  // Fetch weekly progress
+  const { data: progressData = [] } = useQuery({
+    queryKey: ['progress-weekly'],
+    queryFn: () => progressService.getWeeklyProgress()
+  });
+
+  // Add nutrition item mutation
+  const addItemMutation = useMutation({
+    mutationFn: (item: Omit<NutritionItem, 'id' | 'timestamp'>) =>
+      nutritionService.addNutritionItem(item),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nutrition-items'] });
+      queryClient.invalidateQueries({ queryKey: ['progress-weekly'] });
       toast.success("Food item added successfully");
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error adding food item:", error);
       toast.error("Failed to add food item");
     }
-  };
-  
-  const handleDeleteNutritionItem = (id: string) => {
-    try {
-      setNutritionItems((prev) => prev.filter(item => item.id !== id));
+  });
+
+  // Delete nutrition item mutation
+  const deleteItemMutation = useMutation({
+    mutationFn: (id: string) => nutritionService.deleteNutritionItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nutrition-items'] });
+      queryClient.invalidateQueries({ queryKey: ['progress-weekly'] });
       toast.success("Food item deleted");
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error deleting food item:", error);
       toast.error("Failed to delete food item");
     }
+  });
+
+  // Update goals mutation
+  const updateGoalsMutation = useMutation({
+    mutationFn: (goals: NutritionGoal) => nutritionService.updateNutritionGoals(goals),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nutrition-goals'] });
+      setShowGoalsForm(false);
+      toast.success("Nutrition goals updated");
+    },
+    onError: (error) => {
+      console.error("Error updating goals:", error);
+      toast.error("Failed to update goals");
+    }
+  });
+  
+  const handleAddNutritionItem = (item: Omit<NutritionItem, 'id' | 'timestamp'>) => {
+    addItemMutation.mutate(item);
   };
   
-  const handleExportData = () => {
+  const handleDeleteNutritionItem = (id: string) => {
+    deleteItemMutation.mutate(id);
+  };
+  
+  const handleExportData = async () => {
     try {
+      const items = await nutritionService.getNutritionItems();
+      const goals = await nutritionService.getNutritionGoals();
+      
       const exportData = {
-        nutritionItems,
-        goals: nutritionGoals,
+        nutritionItems: items,
+        goals: goals || DEFAULT_NUTRITION_GOALS,
         exportDate: new Date()
       };
       
@@ -164,13 +123,13 @@ const Nutrition = () => {
     }
   };
   
-  const handleImportData = (fileInput: HTMLInputElement) => {
+  const handleImportData = async (fileInput: HTMLInputElement) => {
     try {
       const file = fileInput.files?.[0];
       if (!file) return;
       
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         try {
           const result = e.target?.result;
           if (typeof result !== 'string') return;
@@ -178,17 +137,24 @@ const Nutrition = () => {
           const importedData = JSON.parse(result);
           
           if (Array.isArray(importedData.nutritionItems)) {
-            // Convert string dates back to Date objects
-            const processedItems = importedData.nutritionItems.map((item: any) => ({
-              ...item,
-              timestamp: new Date(item.timestamp)
-            }));
-            
-            setNutritionItems(processedItems);
+            // Import each item
+            for (const item of importedData.nutritionItems) {
+              await nutritionService.addNutritionItem({
+                name: item.name,
+                calories: item.calories,
+                protein: item.protein,
+                carbs: item.carbs,
+                fats: item.fats,
+                isVegetarian: item.isVegetarian,
+                category: item.category
+              });
+            }
+            queryClient.invalidateQueries({ queryKey: ['nutrition-items'] });
           }
           
           if (importedData.goals) {
-            setNutritionGoals(importedData.goals);
+            await nutritionService.updateNutritionGoals(importedData.goals);
+            queryClient.invalidateQueries({ queryKey: ['nutrition-goals'] });
           }
           
           toast.success("Nutrition data imported successfully");
@@ -206,9 +172,7 @@ const Nutrition = () => {
   };
   
   const handleSaveGoals = (goals: NutritionGoal) => {
-    setNutritionGoals(goals);
-    setShowGoalsForm(false);
-    toast.success("Nutrition goals updated");
+    updateGoalsMutation.mutate(goals);
   };
 
   // Add page entrance animation
@@ -230,6 +194,8 @@ const Nutrition = () => {
     },
     { calories: 0, protein: 0, carbs: 0, fats: 0 }
   );
+
+  const isLoading = itemsLoading || goalsLoading;
   
   return (
     <div className="min-h-screen bg-background">
@@ -243,20 +209,24 @@ const Nutrition = () => {
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             <div className="lg:col-span-2">
-              <NutritionTracker
-                nutritionItems={nutritionItems}
-                onAddItem={handleAddNutritionItem}
-                onDeleteItem={handleDeleteNutritionItem}
-                onExportData={handleExportData}
-                onImportData={handleImportData}
-              />
+              {isLoading ? (
+                <div className="glass-card p-6">Loading...</div>
+              ) : (
+                <NutritionTracker
+                  nutritionItems={nutritionItems}
+                  onAddItem={handleAddNutritionItem}
+                  onDeleteItem={handleDeleteNutritionItem}
+                  onExportData={handleExportData}
+                  onImportData={handleImportData}
+                />
+              )}
             </div>
             
             <div>
               {showGoalsForm ? (
                 <div className="glass-card p-6 mb-6">
                   <NutritionGoalsForm 
-                    currentGoals={nutritionGoals}
+                    currentGoals={nutritionGoals || DEFAULT_NUTRITION_GOALS}
                     onSaveGoals={handleSaveGoals}
                     onCancel={() => setShowGoalsForm(false)}
                   />
@@ -264,7 +234,7 @@ const Nutrition = () => {
               ) : (
                 <DailySummary 
                   nutritionTotals={nutritionTotals} 
-                  nutritionGoals={nutritionGoals}
+                  nutritionGoals={nutritionGoals || DEFAULT_NUTRITION_GOALS}
                   onSetGoals={() => setShowGoalsForm(true)}
                 />
               )}
