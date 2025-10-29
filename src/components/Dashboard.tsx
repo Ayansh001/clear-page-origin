@@ -96,39 +96,6 @@ const Dashboard = () => {
     setNutritionItems((prev) => [...prev, newItem]);
   };
   
-  const handleDeleteNutritionItem = (id: string) => {
-    setNutritionItems(prev => prev.filter(item => item.id !== id));
-  };
-  
-  const handleExportData = () => {
-    const dataStr = JSON.stringify(nutritionItems, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    const exportFileDefaultName = 'nutrition-data.json';
-    
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
-  };
-  
-  const handleImportData = (fileInput: HTMLInputElement) => {
-    const file = fileInput.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const imported = JSON.parse(e.target?.result as string);
-          if (Array.isArray(imported)) {
-            setNutritionItems(imported);
-          }
-        } catch (error) {
-          console.error('Error importing data:', error);
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-  
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
       <div className="mt-24 mb-8">
@@ -149,9 +116,6 @@ const Dashboard = () => {
         progressData={progressData}
         onWaterChange={handleWaterChange}
         onAddNutritionItem={handleAddNutritionItem}
-        onDeleteNutritionItem={handleDeleteNutritionItem}
-        onExportData={handleExportData}
-        onImportData={handleImportData}
       />
     </div>
   );

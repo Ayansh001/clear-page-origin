@@ -1,5 +1,5 @@
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Label } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
 import { cn } from '@/lib/utils';
 
 interface NutritionVisualProps {
@@ -39,54 +39,10 @@ const NutritionVisual = ({
     lg: 'h-40'
   };
   
-  const CustomLabel = ({ viewBox, value1, value2, value3 }: any) => {
-    const { cx, cy } = viewBox;
-    const radius = size === 'sm' ? 65 : size === 'md' ? 85 : 105;
-    
-    // Calculate positions in a circle
-    const angle1 = -90; // Top
-    const angle2 = 30; // Right
-    const angle3 = 150; // Left
-    
-    const getPosition = (angle: number) => {
-      const radian = (angle * Math.PI) / 180;
-      return {
-        x: cx + radius * Math.cos(radian),
-        y: cy + radius * Math.sin(radian)
-      };
-    };
-    
-    const pos1 = getPosition(angle1);
-    const pos2 = getPosition(angle2);
-    const pos3 = getPosition(angle3);
-    
-    const fontSize = size === 'sm' ? 10 : size === 'md' ? 11 : 12;
-    
-    return (
-      <g>
-        {value1 && (
-          <text x={pos1.x} y={pos1.y} textAnchor="middle" className="fill-foreground" fontSize={fontSize} fontWeight="600">
-            {value1}
-          </text>
-        )}
-        {value2 && (
-          <text x={pos2.x} y={pos2.y} textAnchor="middle" className="fill-foreground" fontSize={fontSize} fontWeight="600">
-            {value2}
-          </text>
-        )}
-        {value3 && (
-          <text x={pos3.x} y={pos3.y} textAnchor="middle" className="fill-foreground" fontSize={fontSize} fontWeight="600">
-            {value3}
-          </text>
-        )}
-      </g>
-    );
-  };
-  
   return (
     <div className={cn('w-full', sizes[size], className)}>
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+        <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
           <Pie
             data={chartData}
             cx="50%"
@@ -101,15 +57,15 @@ const NutritionVisual = ({
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.color} />
             ))}
-            <Label 
-              content={<CustomLabel 
-                value1={total > 0 ? `${protein}g Protein` : null}
-                value2={total > 0 ? `${carbs}g Carbs` : null}
-                value3={total > 0 ? `${fats}g Fats` : null}
-              />}
-              position="center" 
-            />
           </Pie>
+          <Legend 
+            verticalAlign="bottom" 
+            height={36} 
+            iconType="circle"
+            formatter={(value) => (
+              <span className="text-xs font-medium">{value}</span>
+            )}
+          />
         </PieChart>
       </ResponsiveContainer>
     </div>

@@ -77,7 +77,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
             <WorkoutForm 
               isTemplate
               onAddWorkout={(workout) => {
-                const { startTime, endTime, completed, date, ...templateData } = workout;
+                const { id, startTime, endTime, completed, date, ...templateData } = workout;
                 onAddTemplate(templateData as Omit<WorkoutTemplate, 'id'>);
                 setIsDialogOpen(false);
               }}
