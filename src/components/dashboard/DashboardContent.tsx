@@ -33,6 +33,9 @@ const DashboardContent = ({
         <NutritionTracker
           nutritionItems={nutritionItems}
           onAddItem={onAddNutritionItem}
+          onDeleteItem={() => {}}
+          onExportData={() => {}}
+          onImportData={() => {}}
         />
       </div>
       
